@@ -135,11 +135,18 @@
         // Import necessary Firebase functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // FIX: The `addDoc` function was imported twice. The second instance is removed.
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables for Firebase and App ID provided by the Canvas environment
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // IMPORTANT: Using the firebaseConfig provided by the user to fix the API key issue.
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqVIIumAY0peEreiJCK1y57HiKQ_auL8o",
+            authDomain: "expensetracker-b7c42.firebaseapp.com",
+            projectId: "expensetracker-b7c42",
+            storageBucket: "expensetracker-b7c42.firebasestorage.app",
+            messagingSenderId: "530316235757",
+            appId: "1:530316235757:web:373760e8f89807a7b38de4",
+            measurementId: "G-2CTCVBE2EB"
+        };
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
