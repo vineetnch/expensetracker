@@ -134,19 +134,13 @@
     <script type="module">
         // Import necessary Firebase functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // IMPORTANT: This configuration uses your Firebase project keys.
-        const firebaseConfig = {
-            apiKey: "AIzaSyCqVIIumAY0peEreiJCK1y57HiKQ_auL8o",
-            authDomain: "expensetracker-b7c42.firebaseapp.com",
-            projectId: "expensetracker-b7c42",
-            storageBucket: "expensetracker-b7c42.firebasestorage.app",
-            messagingSenderId: "530316235757",
-            appId: "1:530316235757:web:373760e8f89807a7b38de4",
-            measurementId: "G-2CTCVBE2EB"
-        };
+        // Global variables for Firebase and App ID provided by the Canvas environment
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         let db, auth, userId;
         const loadingElement = document.getElementById('loading');
@@ -244,7 +238,8 @@
                 return;
             }
 
-            const q = collection(db, `users/${userId}/expenses`);
+            // Updated Firestore collection path to include the app ID
+            const q = collection(db, `artifacts/${appId}/users/${userId}/expenses`);
             onSnapshot(q, (snapshot) => {
                 const expenses = [];
                 snapshot.forEach(doc => {
@@ -288,7 +283,8 @@
 
             try {
                 const expenseTimestamp = new Date(expenseDate).getTime();
-                await addDoc(collection(db, `users/${userId}/expenses`), {
+                // Updated Firestore collection path to include the app ID
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/expenses`), {
                     description,
                     merchant,
                     amount,
@@ -318,7 +314,8 @@
         // Function to delete an expense
         const deleteExpense = async (docId) => {
             try {
-                const docRef = doc(db, `users/${userId}/expenses`, docId);
+                // Updated Firestore document path to include the app ID
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/expenses`, docId);
                 await deleteDoc(docRef);
                 console.log("Document successfully deleted!");
             } catch (error) {
@@ -368,8 +365,12 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
         
-                // Sign in anonymously
-                await signInAnonymously(auth);
+                // Use the provided auth token if it exists, otherwise sign in anonymously
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
                 
                 // Get the user ID after successful sign-in
                 onAuthStateChanged(auth, (user) => {
