@@ -39,6 +39,7 @@
             <h2 class="text-2xl font-semibold text-gray-700 mb-4">Add a new expense</h2>
             <form id="expenseForm" class="space-y-4">
                 <input type="text" id="expenseDescription" placeholder="Description (e.g., Groceries)" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="expenseMerchant" placeholder="Merchant (e.g., SuperMart)" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <input type="number" id="expenseAmount" placeholder="Amount (e.g., 50.00)" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <select id="expenseCategory" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="" disabled selected>Select a category</option>
@@ -57,7 +58,7 @@
             <h2 class="text-2xl font-semibold text-gray-700">Summary</h2>
             <div class="flex justify-between items-center text-lg font-medium text-gray-800">
                 <span>Total Expenses:</span>
-                <span id="totalExpenses" class="text-2xl font-bold text-blue-600">$0.00</span>
+                <span id="totalExpenses" class="text-2xl font-bold text-blue-600">₹0.00</span>
             </div>
             <div>
                 <h3 class="text-lg font-medium text-gray-700 mb-2">Expenses by Category</h3>
@@ -90,6 +91,13 @@
                 </div>
             </div>
         </div>
+
+        <!-- Download Button -->
+        <div class="mt-8 text-center">
+            <button onclick="downloadHtml()" class="bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">
+                Download HTML File
+            </button>
+        </div>
     </div>
 
     <!-- Firebase JS SDK -->
@@ -99,16 +107,15 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // IMPORTANT: The following code is for a Vercel/GitHub deployment.
-        // It reads your Firebase credentials from environment variables.
-        // You MUST configure these variables in your Vercel project's settings.
+        // IMPORTANT: This configuration uses your Firebase project keys.
         const firebaseConfig = {
-            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-            appId: import.meta.env.VITE_FIREBASE_APP_ID,
+            apiKey: "AIzaSyCqVIIumAY0peEreiJCK1y57HiKQ_auL8o",
+            authDomain: "expensetracker-b7c42.firebaseapp.com",
+            projectId: "expensetracker-b7c42",
+            storageBucket: "expensetracker-b7c42.firebasestorage.app",
+            messagingSenderId: "530316235757",
+            appId: "1:530316235757:web:373760e8f89807a7b38de4",
+            measurementId: "G-2CTCVBE2EB"
         };
 
         let db, auth, userId;
@@ -148,7 +155,7 @@
                 }
             });
 
-            totalExpensesElement.textContent = `$${total.toFixed(2)}`;
+            totalExpensesElement.textContent = `₹${total.toFixed(2)}`;
             
             // Sort categories for consistent display
             const sortedCategories = Object.keys(categoryTotals).sort();
@@ -160,7 +167,7 @@
                 item.className = 'flex justify-between items-center text-gray-600';
                 item.innerHTML = `
                     <span>${category}:</span>
-                    <span class="font-semibold">$${amount.toFixed(2)}</span>
+                    <span class="font-semibold">₹${amount.toFixed(2)}</span>
                 `;
                 categorySummaryElement.appendChild(item);
             });
@@ -177,10 +184,10 @@
                 item.innerHTML = `
                     <div>
                         <p class="font-semibold text-gray-800">${expense.description}</p>
-                        <p class="text-sm text-gray-500">${expense.category}</p>
+                        <p class="text-sm text-gray-500">${expense.merchant} &bull; ${expense.category}</p>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <span class="font-bold text-lg text-blue-600">$${expense.amount.toFixed(2)}</span>
+                        <span class="font-bold text-lg text-blue-600">₹${expense.amount.toFixed(2)}</span>
                         <button data-id="${expense.id}" class="delete-btn text-red-500 hover:text-red-700">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -217,11 +224,22 @@
             event.preventDefault();
             showLoading(true);
             const description = document.getElementById('expenseDescription').value;
+            const merchant = document.getElementById('expenseMerchant').value;
             const amount = parseFloat(document.getElementById('expenseAmount').value);
             const category = document.getElementById('expenseCategory').value;
             
-            if (!description || isNaN(amount) || !category) {
-                alert('Please fill in all fields correctly.');
+            if (!description || !merchant || isNaN(amount) || !category) {
+                // Using a custom modal instead of alert()
+                modalText.textContent = 'Please fill in all fields correctly.';
+                confirmationModal.classList.remove('hidden');
+                confirmDeleteButton.classList.add('hidden');
+                cancelDeleteButton.textContent = 'OK';
+                
+                cancelDeleteButton.onclick = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmDeleteButton.classList.remove('hidden');
+                    cancelDeleteButton.textContent = 'Cancel';
+                };
                 showLoading(false);
                 return;
             }
@@ -229,6 +247,7 @@
             try {
                 await addDoc(collection(db, `users/${userId}/expenses`), {
                     description,
+                    merchant,
                     amount,
                     category,
                     timestamp: Date.now(),
@@ -236,7 +255,15 @@
                 expenseForm.reset();
             } catch (error) {
                 console.error("Error adding document: ", error);
-                alert('Failed to add expense. Check the console for details.');
+                modalText.textContent = 'Failed to add expense. Check the console for details.';
+                confirmationModal.classList.remove('hidden');
+                confirmDeleteButton.classList.add('hidden');
+                cancelDeleteButton.textContent = 'OK';
+                cancelDeleteButton.onclick = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmDeleteButton.classList.remove('hidden');
+                    cancelDeleteButton.textContent = 'Cancel';
+                };
             } finally {
                 showLoading(false);
             }
@@ -250,7 +277,15 @@
                 console.log("Document successfully deleted!");
             } catch (error) {
                 console.error("Error removing document: ", error);
-                alert('Failed to delete expense. Check the console for details.');
+                modalText.textContent = 'Failed to delete expense. Check the console for details.';
+                confirmationModal.classList.remove('hidden');
+                confirmDeleteButton.classList.add('hidden');
+                cancelDeleteButton.textContent = 'OK';
+                cancelDeleteButton.onclick = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmDeleteButton.classList.remove('hidden');
+                    cancelDeleteButton.textContent = 'Cancel';
+                };
             }
         };
         
@@ -268,6 +303,8 @@
                 confirmDeleteButton.onclick = () => {
                     deleteExpense(docIdToDelete);
                     confirmationModal.classList.add('hidden');
+                    confirmDeleteButton.classList.remove('hidden');
+                    cancelDeleteButton.textContent = 'Cancel';
                 };
 
                 cancelDeleteButton.onclick = () => {
@@ -275,6 +312,20 @@
                 };
             }
         });
+
+        // Function to trigger a download of the HTML content
+        window.downloadHtml = () => {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'expense-tracker.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
 
         // Main app initialization
         const initializeAppWithFirebase = async () => {
@@ -303,7 +354,15 @@
 
             } catch (error) {
                 console.error("Initialization failed: ", error);
-                alert("Failed to initialize the app. Check the console for more details.");
+                modalText.textContent = "Failed to initialize the app. Check the console for more details.";
+                confirmationModal.classList.remove('hidden');
+                confirmDeleteButton.classList.add('hidden');
+                cancelDeleteButton.textContent = 'OK';
+                cancelDeleteButton.onclick = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmDeleteButton.classList.remove('hidden');
+                    cancelDeleteButton.textContent = 'Cancel';
+                };
                 showLoading(false);
             }
         };
