@@ -73,6 +73,8 @@
                     <option value="UPI">UPI</option>
                     <option value="Cash">Cash</option>
                 </select>
+
+                <input type="date" id="expenseDate" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 
                 <div class="flex space-x-4">
                     <input type="number" id="expenseAmount" placeholder="Amount (e.g., 500)" required class="w-2/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -124,13 +126,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Download Button -->
-        <div class="mt-8 text-center">
-            <button onclick="downloadHtml()" class="bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">
-                Download HTML File
-            </button>
         </div>
     </div>
 
@@ -219,10 +214,12 @@
             expenses.forEach(expense => {
                 const item = document.createElement('li');
                 item.className = 'bg-white p-4 rounded-xl shadow flex justify-between items-center';
+                const date = new Date(expense.timestamp);
+                const formattedDate = date.toLocaleDateString();
                 item.innerHTML = `
                     <div>
                         <p class="font-semibold text-gray-800">${expense.description}</p>
-                        <p class="text-sm text-gray-500">${expense.merchant} &bull; ${expense.category} &bull; ${expense.paymentType}</p>
+                        <p class="text-sm text-gray-500">${expense.merchant} &bull; ${expense.category} &bull; ${expense.paymentType} &bull; ${formattedDate}</p>
                         <p class="text-sm text-green-600">Cashback: ₹${expense.cashbackAmount.toFixed(2)} (${expense.cashbackPercentage}%)</p>
                     </div>
                     <div class="flex items-center space-x-4">
@@ -266,10 +263,11 @@
             const merchant = document.getElementById('expenseMerchant').value;
             const category = document.getElementById('expenseCategory').value;
             const paymentType = document.getElementById('paymentType').value;
+            const expenseDate = document.getElementById('expenseDate').value;
             const amount = parseFloat(document.getElementById('expenseAmount').value);
             const cashbackPercentage = parseFloat(document.getElementById('cashbackPercentage').value);
             
-            if (!description || !merchant || isNaN(amount) || !category || !paymentType || isNaN(cashbackPercentage)) {
+            if (!description || !merchant || isNaN(amount) || !category || !paymentType || !expenseDate || isNaN(cashbackPercentage)) {
                 // Using a custom modal instead of alert()
                 modalText.textContent = 'Please fill in all fields correctly.';
                 confirmationModal.classList.remove('hidden');
@@ -288,6 +286,7 @@
             const cashbackAmount = amount * (cashbackPercentage / 100);
 
             try {
+                const expenseTimestamp = new Date(expenseDate).getTime();
                 await addDoc(collection(db, `users/${userId}/expenses`), {
                     description,
                     merchant,
@@ -296,7 +295,7 @@
                     paymentType,
                     cashbackPercentage,
                     cashbackAmount,
-                    timestamp: Date.now(),
+                    timestamp: expenseTimestamp,
                 });
                 expenseForm.reset();
             } catch (error) {
@@ -358,20 +357,6 @@
                 };
             }
         });
-
-        // Function to trigger a download of the HTML content
-        window.downloadHtml = () => {
-            const htmlContent = document.documentElement.outerHTML;
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'expense-tracker.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        };
 
         // Main app initialization
         const initializeAppWithFirebase = async () => {
