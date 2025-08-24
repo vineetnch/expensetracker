@@ -255,6 +255,22 @@
         // Function to save an expense
         const saveExpense = async (event) => {
             event.preventDefault();
+            
+            // Check if Firebase is ready before proceeding
+            if (!db || !userId) {
+                console.error("Firebase not ready. Please wait a moment and try again.");
+                modalText.textContent = 'App is not ready yet. Please wait a few seconds and try again.';
+                confirmationModal.classList.remove('hidden');
+                confirmDeleteButton.classList.add('hidden');
+                cancelDeleteButton.textContent = 'OK';
+                cancelDeleteButton.onclick = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmDeleteButton.classList.remove('hidden');
+                    cancelDeleteButton.textContent = 'Cancel';
+                };
+                return;
+            }
+
             showLoading(true);
             const merchant = document.getElementById('expenseMerchant').value;
             const category = document.getElementById('expenseCategory').value;
@@ -314,6 +330,21 @@
 
         // Function to delete an expense
         const deleteExpense = async (docId) => {
+            // Check if Firebase is ready before proceeding
+            if (!db || !userId) {
+                console.error("Firebase not ready. Please wait a moment and try again.");
+                modalText.textContent = 'App is not ready yet. Please wait a few seconds and try again.';
+                confirmationModal.classList.remove('hidden');
+                confirmDeleteButton.classList.add('hidden');
+                cancelDeleteButton.textContent = 'OK';
+                cancelDeleteButton.onclick = () => {
+                    confirmationModal.classList.add('hidden');
+                    confirmDeleteButton.classList.remove('hidden');
+                    cancelDeleteButton.textContent = 'Cancel';
+                };
+                return;
+            }
+
             try {
                 // Correct Firestore document path to include the app ID
                 const docRef = doc(db, `artifacts/${appId}/users/${userId}/expenses`, docId);
