@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vercel Expense Tracker</title>
+    <title>Cloud-Synced Expense Tracker</title>
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inter Font -->
@@ -20,7 +20,7 @@
     <div id="app" class="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 space-y-8">
         <header class="text-center">
             <h1 class="text-3xl font-bold text-gray-800">Expense Tracker</h1>
-            <p class="text-gray-500 mt-2">Track your spending easily. Connected to a secure database.</p>
+            <p class="text-gray-500 mt-2">Track your spending, synced across all your devices.</p>
         </header>
 
         <!-- Loading Indicator -->
@@ -135,7 +135,8 @@
         // Import necessary Firebase functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // FIX: The `addDoc` function was imported twice. The second instance is removed.
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables for Firebase and App ID provided by the Canvas environment
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
@@ -238,7 +239,7 @@
                 return;
             }
 
-            // Updated Firestore collection path to include the app ID
+            // Correct Firestore collection path to include the app ID
             const q = collection(db, `artifacts/${appId}/users/${userId}/expenses`);
             onSnapshot(q, (snapshot) => {
                 const expenses = [];
@@ -283,7 +284,7 @@
 
             try {
                 const expenseTimestamp = new Date(expenseDate).getTime();
-                // Updated Firestore collection path to include the app ID
+                // Correct Firestore collection path to include the app ID
                 await addDoc(collection(db, `artifacts/${appId}/users/${userId}/expenses`), {
                     description,
                     merchant,
@@ -314,7 +315,7 @@
         // Function to delete an expense
         const deleteExpense = async (docId) => {
             try {
-                // Updated Firestore document path to include the app ID
+                // Correct Firestore document path to include the app ID
                 const docRef = doc(db, `artifacts/${appId}/users/${userId}/expenses`, docId);
                 await deleteDoc(docRef);
                 console.log("Document successfully deleted!");
